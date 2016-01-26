@@ -1,57 +1,38 @@
 package com.example.xyzreader.ui;
 
 import android.content.Context;
-import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
+import android.support.v4.view.ViewCompat;
 import android.util.AttributeSet;
 import android.view.View;
-import android.view.ViewGroup;
-
-import java.lang.reflect.Method;
 
 /**
  * Created by igiagante on 25/1/16.
  */
 public class FABBehavior extends FloatingActionButton.Behavior {
 
-    public FABBehavior() {
+    public FABBehavior(Context context, AttributeSet attributeSet){
+        super();
     }
 
-    public FABBehavior(Context context, AttributeSet attributeSet) {
-    }
 
-    public boolean onDependentViewChanged(CoordinatorLayout parent, FloatingActionButton child, View dependency) {
-        if(dependency instanceof Snackbar.SnackbarLayout) {
-            return super.onDependentViewChanged(parent, child, dependency);
-        } else if(dependency instanceof AppBarLayout) {
-            this.updateFabVisibility(parent, (AppBarLayout)dependency, child);
+
+    @Override
+    public void onNestedScroll(CoordinatorLayout coordinatorLayout, FloatingActionButton child, View target, int dxConsumed, int dyConsumed, int dxUnconsumed, int dyUnconsumed) {
+        super.onNestedScroll(coordinatorLayout, child, target, dxConsumed, dyConsumed, dxUnconsumed, dyUnconsumed);
+        if (dyConsumed > 0 && child.getVisibility() == View.VISIBLE) {
+            child.hide();
+        } else if (dyConsumed < 0 && child.getVisibility() == View.GONE) {
+            child.show();
         }
-
-        return false;
     }
 
-    private boolean updateFabVisibility(CoordinatorLayout parent, AppBarLayout appBarLayout, FloatingActionButton child) {
-        CoordinatorLayout.LayoutParams lp = (CoordinatorLayout.LayoutParams)child.getLayoutParams();
-        if(lp.getAnchorId() != appBarLayout.getId()) {
-            return false;
-        } else {
+    @Override
+    public boolean onStartNestedScroll(CoordinatorLayout coordinatorLayout, FloatingActionButton child, View directTargetChild, View target, int nestedScrollAxes) {
+        return nestedScrollAxes == ViewCompat.SCROLL_AXIS_VERTICAL ||
+                super.onStartNestedScroll(coordinatorLayout, child, directTargetChild, target,
+                        nestedScrollAxes);
 
-            ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) child.getLayoutParams();
-            int point = child.getTop() - params.topMargin;
-            try {
-                Method method = AppBarLayout.class.getDeclaredMethod("getMinimumHeightForVisibleOverlappingContent");
-                method.setAccessible(true);
-                if(point <= (int) method.invoke(appBarLayout)) {
-                    child.hide();
-                } else {
-                    child.show();
-                }
-                return true;
-            } catch (Exception e) {
-                return true;
-            }
-        }
     }
 }
