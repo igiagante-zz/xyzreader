@@ -26,6 +26,7 @@
                     android:layout_height="310dp"
                     android:src="@drawable/no_image"
                     android:scaleType="centerCrop"
+                    android:transitionName="@string/transition_photo"
                      />
 
                 <View

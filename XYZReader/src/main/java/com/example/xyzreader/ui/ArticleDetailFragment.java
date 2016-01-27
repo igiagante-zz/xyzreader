@@ -123,7 +123,7 @@ public class ArticleDetailFragment extends Fragment implements
 
                 FloatingActionButton fab = (FloatingActionButton) getActivity().findViewById(R.id.share_fab);
                 if(fab != null) {
-                    if (mScrollY >= 0 && mScrollY <= 100) {
+                    if (mScrollY <= 200) {
                         fab.show();
                     } else {
                         fab.hide();

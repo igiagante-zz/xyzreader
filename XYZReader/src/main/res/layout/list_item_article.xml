@@ -18,7 +18,8 @@
             android:id="@+id/thumbnail"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:src="@drawable/no_image"/>
+            android:src="@drawable/no_image"
+            android:transitionName="@string/transition_photo"/>
 
         <TextView
             android:id="@+id/article_title"
@@ -29,7 +30,7 @@
             android:textColor="@color/black"
             android:ellipsize="end"
             android:maxLines="4"
-            android:text="Subtititle"/>
+            android:text="Subtitle"/>
 
         <TextView
             android:id="@+id/article_subtitle"
