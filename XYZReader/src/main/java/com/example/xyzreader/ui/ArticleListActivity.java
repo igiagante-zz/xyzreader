@@ -287,12 +287,15 @@ public class ArticleListActivity extends AppCompatActivity implements
             mArticlePosition = position;
         }
 
+        private long getItemId(int position) {
+            mCursor.moveToPosition(position);
+            return mCursor.getLong(ArticleLoader.Query._ID);
+        }
+
         @Override
         public void onClick(View v) {
-
-            Intent intent = new Intent(Intent.ACTION_VIEW, ItemsContract.Items.buildItemUri(2));
-
-            intent.putExtra(EXTRA_STARTING_ARTICLE_POSITION, 2);
+            Intent intent = new Intent(Intent.ACTION_VIEW,
+                    ItemsContract.Items.buildItemUri(getItemId(mArticlePosition)));
 
             if (!mIsDetailsActivityStarted) {
                 mIsDetailsActivityStarted = true;
