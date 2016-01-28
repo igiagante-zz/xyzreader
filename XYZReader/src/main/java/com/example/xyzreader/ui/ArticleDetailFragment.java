@@ -15,10 +15,12 @@ import android.support.v4.app.ShareCompat;
 import android.text.Html;
 import android.text.format.DateUtils;
 import android.text.method.LinkMovementMethod;
+import android.transition.Transition;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -38,6 +40,9 @@ public class ArticleDetailFragment extends Fragment implements
     public static final String ARG_ITEM_ID = "item_id";
     private static final float PARALLAX_FACTOR = 1.25f;
 
+    private static final String ARG_ARTICLE_IMAGE_POSITION = "arg_article_image_position";
+    private static final String ARG_STARTING_ARTICLE_IMAGE_POSITION = "arg_starting_article_image_position";
+
     private Cursor mCursor;
     private long mItemId;
     private View mRootView;
@@ -53,6 +58,11 @@ public class ArticleDetailFragment extends Fragment implements
     private boolean mIsCard = false;
     private int mStatusBarFullOpacityBottom;
 
+    private int mStartingPosition;
+    private int mArticlePosition;
+    private boolean mIsTransitioning;
+    private long mBackgroundImageFadeMillis;
+
     /**
      * Mandatory empty constructor for the fragment manager to instantiate the
      * fragment (e.g. upon screen orientation changes).
@@ -60,17 +70,24 @@ public class ArticleDetailFragment extends Fragment implements
     public ArticleDetailFragment() {
     }
 
-    public static ArticleDetailFragment newInstance(long itemId) {
-        Bundle arguments = new Bundle();
-        arguments.putLong(ARG_ITEM_ID, itemId);
+    public static ArticleDetailFragment newInstance(long itemId, int position, int startingPosition) {
+        Bundle args = new Bundle();
+        args.putLong(ARG_ITEM_ID, itemId);
+        args.putInt(ARG_ARTICLE_IMAGE_POSITION, position);
+        args.putInt(ARG_STARTING_ARTICLE_IMAGE_POSITION, startingPosition);
         ArticleDetailFragment fragment = new ArticleDetailFragment();
-        fragment.setArguments(arguments);
+        fragment.setArguments(args);
         return fragment;
     }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        mStartingPosition = getArguments().getInt(ARG_STARTING_ARTICLE_IMAGE_POSITION);
+        mArticlePosition = getArguments().getInt(ARG_ARTICLE_IMAGE_POSITION);
+        mIsTransitioning = savedInstanceState == null && mStartingPosition == mArticlePosition;
+        mBackgroundImageFadeMillis = getResources().getInteger(R.integer.fragment_details_background_image_fade_millis);
 
         if (getArguments().containsKey(ARG_ITEM_ID)) {
             mItemId = getArguments().getLong(ARG_ITEM_ID);
@@ -101,6 +118,7 @@ public class ArticleDetailFragment extends Fragment implements
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
             Bundle savedInstanceState) {
         mRootView = inflater.inflate(R.layout.fragment_article_detail, container, false);
+
         mDrawInsetsFrameLayout = (DrawInsetsFrameLayout)
                 mRootView.findViewById(R.id.draw_insets_frame_layout);
         mDrawInsetsFrameLayout.setOnInsetsCallback(new DrawInsetsFrameLayout.OnInsetsCallback() {
@@ -111,7 +129,6 @@ public class ArticleDetailFragment extends Fragment implements
         });
 
         mScrollView = (ObservableScrollView) mRootView.findViewById(R.id.scrollview);
-
 
         mScrollView.setCallbacks(new ObservableScrollView.Callbacks() {
             @Override
@@ -147,9 +164,33 @@ public class ArticleDetailFragment extends Fragment implements
             }
         });
 
+        if (mIsTransitioning) {
+            mPhotoView.setAlpha(0f);
+            getActivity().getWindow().getSharedElementEnterTransition().addListener(new TransitionListenerAdapter() {
+                @Override
+                public void onTransitionEnd(Transition transition) {
+                    mPhotoView.animate().setDuration(mBackgroundImageFadeMillis).alpha(1f);
+                }
+            });
+        }
+
         bindViews();
+        startPostponedEnterTransition();
         updateStatusBar();
         return mRootView;
+    }
+
+    private void startPostponedEnterTransition() {
+        if (mArticlePosition == mStartingPosition) {
+            mPhotoView.getViewTreeObserver().addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener() {
+                @Override
+                public boolean onPreDraw() {
+                    mPhotoView.getViewTreeObserver().removeOnPreDrawListener(this);
+                    getActivity().startPostponedEnterTransition();
+                    return true;
+                }
+            });
+        }
     }
 
     private void updateStatusBar() {
@@ -259,5 +300,9 @@ public class ArticleDetailFragment extends Fragment implements
         return mIsCard
                 ? (int) mPhotoContainerView.getTranslationY() + mPhotoView.getHeight() - mScrollY
                 : mPhotoView.getHeight() - mScrollY;
+    }
+
+    public View getPhotoView() {
+        return mPhotoView;
     }
 }

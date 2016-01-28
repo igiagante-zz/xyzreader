@@ -18,8 +18,7 @@
             android:id="@+id/thumbnail"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:src="@drawable/no_image"
-            android:transitionName="@string/transition_photo"/>
+            android:src="@drawable/no_image"/>
 
         <TextView
             android:id="@+id/article_title"
