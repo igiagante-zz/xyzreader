@@ -26,6 +26,7 @@ import android.widget.TextView;
 
 import com.example.xyzreader.R;
 import com.example.xyzreader.data.ArticleLoader;
+import com.example.xyzreader.data.ItemsContract;
 import com.example.xyzreader.data.UpdaterService;
 import com.squareup.picasso.Picasso;
 
@@ -286,16 +287,18 @@ public class ArticleListActivity extends AppCompatActivity implements
             mArticlePosition = position;
         }
 
+        public long getItemId(int position) {
+            mCursor.moveToPosition(position);
+            return mCursor.getLong(ArticleLoader.Query._ID);
+        }
+
         @Override
         public void onClick(View v) {
-            Intent intent = new Intent(ArticleListActivity.this, ArticleDetailActivity.class);
-            intent.putExtra(EXTRA_STARTING_ARTICLE_POSITION, mArticlePosition);
+            Intent intent = new Intent(Intent.ACTION_VIEW, ItemsContract.Items.buildItemUri(getItemId(mArticlePosition)));
 
-            if (!mIsDetailsActivityStarted) {
-                mIsDetailsActivityStarted = true;
-                startActivity(intent, ActivityOptions.makeSceneTransitionAnimation(ArticleListActivity.this,
-                        thumbnailView, thumbnailView.getTransitionName()).toBundle());
-            }
+            startActivity(intent, ActivityOptions.makeSceneTransitionAnimation(ArticleListActivity.this,
+                    thumbnailView, thumbnailView.getTransitionName()).toBundle());
+
         }
     }
 }
