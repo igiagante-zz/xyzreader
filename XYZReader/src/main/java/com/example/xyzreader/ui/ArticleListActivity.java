@@ -48,6 +48,7 @@ public class ArticleListActivity extends AppCompatActivity implements
 
     static final String EXTRA_STARTING_ARTICLE_POSITION = "extra_starting_article_position";
     static final String EXTRA_CURRENT_ARTICLE_POSITION = "extra_current_article_position";
+    static final String ITEM_NAME_TRANSITION = "item_name_transition";
 
     private Bundle mTmpReenterState;
     private boolean mIsDetailsActivityStarted;
@@ -74,7 +75,7 @@ public class ArticleListActivity extends AppCompatActivity implements
                     // If startingPosition != currentPosition the user must have swiped to a
                     // different page in the DetailsActivity. We must update the shared element
                     // so that the correct one falls into place.
-                    String newTransitionName = mRecyclerView.getChildAt(currentPosition).getTransitionName();
+                    String newTransitionName = ITEM_NAME_TRANSITION + currentPosition;
                     View newSharedElement = mRecyclerView.findViewWithTag(newTransitionName);
                     if (newSharedElement != null) {
                         names.clear();
@@ -200,6 +201,18 @@ public class ArticleListActivity extends AppCompatActivity implements
         StaggeredGridLayoutManager sglm =
                 new StaggeredGridLayoutManager(columnCount, StaggeredGridLayoutManager.VERTICAL);
         mRecyclerView.setLayoutManager(sglm);
+
+        postponeEnterTransition();
+
+        mRecyclerView.getViewTreeObserver().addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener() {
+            @Override
+            public boolean onPreDraw() {
+                mRecyclerView.getViewTreeObserver().removeOnPreDrawListener(this);
+                mRecyclerView.requestLayout();
+                startPostponedEnterTransition();
+                return true;
+            }
+        });
     }
 
     @Override
@@ -283,7 +296,7 @@ public class ArticleListActivity extends AppCompatActivity implements
                     .into(thumbnailView);
 
             if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP){
-                thumbnailView.setTransitionName(titleView.getText().toString());
+                thumbnailView.setTransitionName(ITEM_NAME_TRANSITION + position);
             }
 
             thumbnailView.setTag(titleView.getText().toString());
@@ -298,8 +311,7 @@ public class ArticleListActivity extends AppCompatActivity implements
         @Override
         public void onClick(View v) {
 
-            Intent intent = new Intent(Intent.ACTION_VIEW,
-                    ItemsContract.Items.buildItemUri(getItemId(mArticlePosition)));
+            Intent intent = new Intent(Intent.ACTION_VIEW, ItemsContract.Items.buildItemUri(getItemId(mArticlePosition)));
             intent.putExtra(EXTRA_STARTING_ARTICLE_POSITION, mArticlePosition);
 
             if (!mIsDetailsActivityStarted) {

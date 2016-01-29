@@ -35,8 +35,8 @@ public class ArticleDetailActivity extends AppCompatActivity
         implements LoaderManager.LoaderCallbacks<Cursor> {
 
     private static final String STATE_CURRENT_PAGE_POSITION = "state_current_page_position";
-    static final String EXTRA_STARTING_ALBUM_POSITION = "extra_starting_item_position";
-    static final String EXTRA_CURRENT_ALBUM_POSITION = "extra_current_item_position";
+    static final String EXTRA_STARTING_ARTICLE_POSITION = "extra_starting_article_position";
+    static final String EXTRA_CURRENT_ARTICLE_POSITION = "extra_current_article_position";
 
     private Cursor mCursor;
     private long mStartId;
@@ -89,7 +89,7 @@ public class ArticleDetailActivity extends AppCompatActivity
         postponeEnterTransition();
         setEnterSharedElementCallback(mCallback);
 
-        mStartingPosition = getIntent().getIntExtra(EXTRA_STARTING_ALBUM_POSITION, 0);
+        mStartingPosition = getIntent().getIntExtra(EXTRA_STARTING_ARTICLE_POSITION, 0);
         if (savedInstanceState == null) {
             mCurrentPosition = mStartingPosition;
         } else {
@@ -173,8 +173,8 @@ public class ArticleDetailActivity extends AppCompatActivity
     public void finishAfterTransition() {
         mIsReturning = true;
         Intent data = new Intent();
-        data.putExtra(EXTRA_STARTING_ALBUM_POSITION, mStartingPosition);
-        data.putExtra(EXTRA_CURRENT_ALBUM_POSITION, mCurrentPosition);
+        data.putExtra(EXTRA_STARTING_ARTICLE_POSITION, mStartingPosition);
+        data.putExtra(EXTRA_CURRENT_ARTICLE_POSITION, mCurrentPosition);
         setResult(RESULT_OK, data);
         super.finishAfterTransition();
     }

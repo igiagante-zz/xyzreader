@@ -256,7 +256,7 @@ public class ArticleDetailFragment extends Fragment implements
 
             RequestCreator articleImageRequest = Picasso.with(getActivity()).load(mCursor.getString(ArticleLoader.Query.PHOTO_URL));
 
-            if (mIsTransitioning) {
+            /*if (mIsTransitioning) {
                 articleImageRequest.noFade();
                 articleImage.setAlpha(0f);
                 getActivity().getWindow().getSharedElementEnterTransition().addListener(new TransitionListenerAdapter() {
@@ -265,7 +265,7 @@ public class ArticleDetailFragment extends Fragment implements
                         articleImage.animate().setDuration(mBackgroundImageFadeMillis).alpha(1f);
                     }
                 });
-            }
+            }*/
 
             articleImageRequest.into(articleImage, mImageCallback);
 
