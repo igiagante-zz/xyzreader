@@ -130,7 +130,7 @@ public class ArticleDetailFragment extends Fragment implements
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
-            Bundle savedInstanceState) {
+                             Bundle savedInstanceState) {
         mRootView = inflater.inflate(R.layout.fragment_article_detail, container, false);
 
         mDrawInsetsFrameLayout = (DrawInsetsFrameLayout)
@@ -153,7 +153,7 @@ public class ArticleDetailFragment extends Fragment implements
                 updateStatusBar();
 
                 FloatingActionButton fab = (FloatingActionButton) getActivity().findViewById(R.id.share_fab);
-                if(fab != null) {
+                if (fab != null) {
                     if (mScrollY <= 200) {
                         fab.show();
                     } else {
@@ -189,8 +189,11 @@ public class ArticleDetailFragment extends Fragment implements
                 @Override
                 public boolean onPreDraw() {
                     mPhotoView.getViewTreeObserver().removeOnPreDrawListener(this);
-                    getActivity().startPostponedEnterTransition();
-                    return true;
+                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+                        getActivity().startPostponedEnterTransition();
+                        return true;
+                    }
+                    return false;
                 }
             });
         }
@@ -256,23 +259,26 @@ public class ArticleDetailFragment extends Fragment implements
 
             RequestCreator articleImageRequest = Picasso.with(getActivity()).load(mCursor.getString(ArticleLoader.Query.PHOTO_URL));
 
-            /*if (mIsTransitioning) {
+            if (mIsTransitioning) {
                 articleImageRequest.noFade();
                 articleImage.setAlpha(0f);
-                getActivity().getWindow().getSharedElementEnterTransition().addListener(new TransitionListenerAdapter() {
-                    @Override
-                    public void onTransitionEnd(Transition transition) {
-                        articleImage.animate().setDuration(mBackgroundImageFadeMillis).alpha(1f);
-                    }
-                });
-            }*/
+
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+                    getActivity().getWindow().getSharedElementEnterTransition().addListener(new TransitionListenerAdapter() {
+                        @Override
+                        public void onTransitionEnd(Transition transition) {
+                            articleImage.animate().setDuration(mBackgroundImageFadeMillis).alpha(1f);
+                        }
+                    });
+                }
+            }
 
             articleImageRequest.into(articleImage, mImageCallback);
 
         } else {
             mRootView.setVisibility(View.GONE);
             titleView.setText("N/A");
-            bylineView.setText("N/A" );
+            bylineView.setText("N/A");
             bodyView.setText("N/A");
         }
     }

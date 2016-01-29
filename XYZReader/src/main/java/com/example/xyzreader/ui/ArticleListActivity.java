@@ -8,6 +8,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.Loader;
 import android.database.Cursor;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.SharedElementCallback;
@@ -87,16 +88,18 @@ public class ArticleListActivity extends AppCompatActivity implements
 
                 mTmpReenterState = null;
             } else {
-                // If mTmpReenterState is null, then the activity is exiting.
-                View navigationBar = findViewById(android.R.id.navigationBarBackground);
-                View statusBar = findViewById(android.R.id.statusBarBackground);
-                if (navigationBar != null) {
-                    names.add(navigationBar.getTransitionName());
-                    sharedElements.put(navigationBar.getTransitionName(), navigationBar);
-                }
-                if (statusBar != null) {
-                    names.add(statusBar.getTransitionName());
-                    sharedElements.put(statusBar.getTransitionName(), statusBar);
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                    // If mTmpReenterState is null, then the activity is exiting.
+                    View navigationBar = findViewById(android.R.id.navigationBarBackground);
+                    View statusBar = findViewById(android.R.id.statusBarBackground);
+                    if (navigationBar != null) {
+                        names.add(navigationBar.getTransitionName());
+                        sharedElements.put(navigationBar.getTransitionName(), navigationBar);
+                    }
+                    if (statusBar != null) {
+                        names.add(statusBar.getTransitionName());
+                        sharedElements.put(statusBar.getTransitionName(), statusBar);
+                    }
                 }
             }
         }
@@ -124,7 +127,7 @@ public class ArticleListActivity extends AppCompatActivity implements
             @Override
             public void onRefresh() {
                 //Your refresh code here
-                if(mRecyclerView.getChildCount() > 0) {
+                if (mRecyclerView.getChildCount() > 0) {
                     mSwipeRefreshLayout.setRefreshing(false);
                 }
             }
@@ -153,17 +156,22 @@ public class ArticleListActivity extends AppCompatActivity implements
             mRecyclerView.scrollToPosition(currentPosition);
         }
 
-        postponeEnterTransition();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            postponeEnterTransition();
 
-        mRecyclerView.getViewTreeObserver().addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener() {
-            @Override
-            public boolean onPreDraw() {
-                mRecyclerView.getViewTreeObserver().removeOnPreDrawListener(this);
-                mRecyclerView.requestLayout();
-                startPostponedEnterTransition();
-                return true;
-            }
-        });
+            mRecyclerView.getViewTreeObserver().addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener() {
+                @Override
+                public boolean onPreDraw() {
+                    mRecyclerView.getViewTreeObserver().removeOnPreDrawListener(this);
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                        mRecyclerView.requestLayout();
+                        startPostponedEnterTransition();
+                        return true;
+                    }
+                    return false;
+                }
+            });
+        }
     }
 
     private void refresh() {
@@ -201,18 +209,6 @@ public class ArticleListActivity extends AppCompatActivity implements
         StaggeredGridLayoutManager sglm =
                 new StaggeredGridLayoutManager(columnCount, StaggeredGridLayoutManager.VERTICAL);
         mRecyclerView.setLayoutManager(sglm);
-
-        postponeEnterTransition();
-
-        mRecyclerView.getViewTreeObserver().addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener() {
-            @Override
-            public boolean onPreDraw() {
-                mRecyclerView.getViewTreeObserver().removeOnPreDrawListener(this);
-                mRecyclerView.requestLayout();
-                startPostponedEnterTransition();
-                return true;
-            }
-        });
     }
 
     @Override
@@ -261,7 +257,7 @@ public class ArticleListActivity extends AppCompatActivity implements
         }
     }
 
-    private class ViewHolder extends RecyclerView.ViewHolder  implements View.OnClickListener {
+    private class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
 
         private Cursor mCursor;
         private int mArticlePosition;
@@ -295,7 +291,7 @@ public class ArticleListActivity extends AppCompatActivity implements
                     .load(mCursor.getString(ArticleLoader.Query.PHOTO_URL))
                     .into(thumbnailView);
 
-            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP){
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
                 thumbnailView.setTransitionName(ITEM_NAME_TRANSITION + position);
             }
 
@@ -317,7 +313,7 @@ public class ArticleListActivity extends AppCompatActivity implements
             if (!mIsDetailsActivityStarted) {
                 mIsDetailsActivityStarted = true;
 
-                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP){
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
                     startActivity(intent, ActivityOptions.makeSceneTransitionAnimation(ArticleListActivity.this,
                             thumbnailView, thumbnailView.getTransitionName()).toBundle());
                 } else {
