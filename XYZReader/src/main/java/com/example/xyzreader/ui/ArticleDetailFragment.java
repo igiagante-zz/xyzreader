@@ -26,7 +26,9 @@ import android.widget.TextView;
 
 import com.example.xyzreader.R;
 import com.example.xyzreader.data.ArticleLoader;
+import com.squareup.picasso.Callback;
 import com.squareup.picasso.Picasso;
+import com.squareup.picasso.RequestCreator;
 
 /**
  * A fragment representing a single Article detail screen. This fragment is
@@ -62,6 +64,18 @@ public class ArticleDetailFragment extends Fragment implements
     private int mArticlePosition;
     private boolean mIsTransitioning;
     private long mBackgroundImageFadeMillis;
+
+    private final Callback mImageCallback = new Callback() {
+        @Override
+        public void onSuccess() {
+            startPostponedEnterTransition();
+        }
+
+        @Override
+        public void onError() {
+            startPostponedEnterTransition();
+        }
+    };
 
     /**
      * Mandatory empty constructor for the fragment manager to instantiate the
@@ -164,18 +178,7 @@ public class ArticleDetailFragment extends Fragment implements
             }
         });
 
-        if (mIsTransitioning) {
-            mPhotoView.setAlpha(0f);
-            getActivity().getWindow().getSharedElementEnterTransition().addListener(new TransitionListenerAdapter() {
-                @Override
-                public void onTransitionEnd(Transition transition) {
-                    mPhotoView.animate().setDuration(mBackgroundImageFadeMillis).alpha(1f);
-                }
-            });
-        }
-
         bindViews();
-        startPostponedEnterTransition();
         updateStatusBar();
         return mRootView;
     }
@@ -232,7 +235,7 @@ public class ArticleDetailFragment extends Fragment implements
         TextView bylineView = (TextView) mRootView.findViewById(R.id.article_byline);
         bylineView.setMovementMethod(new LinkMovementMethod());
         TextView bodyView = (TextView) mRootView.findViewById(R.id.article_body);
-        ImageView articleImage = (ImageView) mRootView.findViewById(R.id.photo);
+        final ImageView articleImage = (ImageView) mRootView.findViewById(R.id.photo);
         bodyView.setTypeface(Typeface.createFromAsset(getResources().getAssets(), "Rosario-Regular.ttf"));
 
         if (mCursor != null) {
@@ -251,7 +254,20 @@ public class ArticleDetailFragment extends Fragment implements
                             + "</font>"));
             bodyView.setText(Html.fromHtml(mCursor.getString(ArticleLoader.Query.BODY)));
 
-            Picasso.with(getActivity()).load(mCursor.getString(ArticleLoader.Query.PHOTO_URL)).into(articleImage);
+            RequestCreator articleImageRequest = Picasso.with(getActivity()).load(mCursor.getString(ArticleLoader.Query.PHOTO_URL));
+
+            if (mIsTransitioning) {
+                articleImageRequest.noFade();
+                articleImage.setAlpha(0f);
+                getActivity().getWindow().getSharedElementEnterTransition().addListener(new TransitionListenerAdapter() {
+                    @Override
+                    public void onTransitionEnd(Transition transition) {
+                        articleImage.animate().setDuration(mBackgroundImageFadeMillis).alpha(1f);
+                    }
+                });
+            }
+
+            articleImageRequest.into(articleImage, mImageCallback);
 
         } else {
             mRootView.setVisibility(View.GONE);

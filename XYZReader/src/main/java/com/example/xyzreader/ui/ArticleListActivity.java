@@ -26,6 +26,7 @@ import android.widget.TextView;
 
 import com.example.xyzreader.R;
 import com.example.xyzreader.data.ArticleLoader;
+import com.example.xyzreader.data.ItemsContract;
 import com.example.xyzreader.data.UpdaterService;
 import com.squareup.picasso.Picasso;
 
@@ -281,20 +282,34 @@ public class ArticleListActivity extends AppCompatActivity implements
                     .load(mCursor.getString(ArticleLoader.Query.PHOTO_URL))
                     .into(thumbnailView);
 
-            thumbnailView.setTransitionName(titleView.getText().toString());
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP){
+                thumbnailView.setTransitionName(titleView.getText().toString());
+            }
+
             thumbnailView.setTag(titleView.getText().toString());
             mArticlePosition = position;
         }
 
+        public long getItemId(int position) {
+            mCursor.moveToPosition(position);
+            return mCursor.getLong(ArticleLoader.Query._ID);
+        }
+
         @Override
         public void onClick(View v) {
-            Intent intent = new Intent(ArticleListActivity.this, ArticleDetailActivity.class);
+            Intent intent = new Intent(Intent.ACTION_VIEW,
+                    ItemsContract.Items.buildItemUri(getItemId(mArticlePosition)));
             intent.putExtra(EXTRA_STARTING_ARTICLE_POSITION, mArticlePosition);
 
             if (!mIsDetailsActivityStarted) {
                 mIsDetailsActivityStarted = true;
-                startActivity(intent, ActivityOptions.makeSceneTransitionAnimation(ArticleListActivity.this,
-                        thumbnailView, thumbnailView.getTransitionName()).toBundle());
+
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP){
+                    startActivity(intent, ActivityOptions.makeSceneTransitionAnimation(ArticleListActivity.this,
+                            thumbnailView, thumbnailView.getTransitionName()).toBundle());
+                } else {
+                    startActivity(intent);
+                }
             }
         }
     }
