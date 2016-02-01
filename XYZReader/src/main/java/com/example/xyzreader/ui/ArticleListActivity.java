@@ -8,6 +8,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.Loader;
 import android.database.Cursor;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.SharedElementCallback;
@@ -48,6 +49,7 @@ public class ArticleListActivity extends AppCompatActivity implements
 
     static final String EXTRA_STARTING_ARTICLE_POSITION = "extra_starting_article_position";
     static final String EXTRA_CURRENT_ARTICLE_POSITION = "extra_current_article_position";
+    static final String ITEM_NAME_TRANSITION = "item_name_transition";
 
     private Bundle mTmpReenterState;
     private boolean mIsDetailsActivityStarted;
@@ -74,7 +76,7 @@ public class ArticleListActivity extends AppCompatActivity implements
                     // If startingPosition != currentPosition the user must have swiped to a
                     // different page in the DetailsActivity. We must update the shared element
                     // so that the correct one falls into place.
-                    String newTransitionName = mRecyclerView.getChildAt(currentPosition).getTransitionName();
+                    String newTransitionName = ITEM_NAME_TRANSITION + currentPosition;
                     View newSharedElement = mRecyclerView.findViewWithTag(newTransitionName);
                     if (newSharedElement != null) {
                         names.clear();
@@ -86,16 +88,18 @@ public class ArticleListActivity extends AppCompatActivity implements
 
                 mTmpReenterState = null;
             } else {
-                // If mTmpReenterState is null, then the activity is exiting.
-                View navigationBar = findViewById(android.R.id.navigationBarBackground);
-                View statusBar = findViewById(android.R.id.statusBarBackground);
-                if (navigationBar != null) {
-                    names.add(navigationBar.getTransitionName());
-                    sharedElements.put(navigationBar.getTransitionName(), navigationBar);
-                }
-                if (statusBar != null) {
-                    names.add(statusBar.getTransitionName());
-                    sharedElements.put(statusBar.getTransitionName(), statusBar);
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                    // If mTmpReenterState is null, then the activity is exiting.
+                    View navigationBar = findViewById(android.R.id.navigationBarBackground);
+                    View statusBar = findViewById(android.R.id.statusBarBackground);
+                    if (navigationBar != null) {
+                        names.add(navigationBar.getTransitionName());
+                        sharedElements.put(navigationBar.getTransitionName(), navigationBar);
+                    }
+                    if (statusBar != null) {
+                        names.add(statusBar.getTransitionName());
+                        sharedElements.put(statusBar.getTransitionName(), statusBar);
+                    }
                 }
             }
         }
@@ -123,7 +127,7 @@ public class ArticleListActivity extends AppCompatActivity implements
             @Override
             public void onRefresh() {
                 //Your refresh code here
-                if(mRecyclerView.getChildCount() > 0) {
+                if (mRecyclerView.getChildCount() > 0) {
                     mSwipeRefreshLayout.setRefreshing(false);
                 }
             }
@@ -152,17 +156,22 @@ public class ArticleListActivity extends AppCompatActivity implements
             mRecyclerView.scrollToPosition(currentPosition);
         }
 
-        postponeEnterTransition();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            postponeEnterTransition();
 
-        mRecyclerView.getViewTreeObserver().addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener() {
-            @Override
-            public boolean onPreDraw() {
-                mRecyclerView.getViewTreeObserver().removeOnPreDrawListener(this);
-                mRecyclerView.requestLayout();
-                startPostponedEnterTransition();
-                return true;
-            }
-        });
+            mRecyclerView.getViewTreeObserver().addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener() {
+                @Override
+                public boolean onPreDraw() {
+                    mRecyclerView.getViewTreeObserver().removeOnPreDrawListener(this);
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                        mRecyclerView.requestLayout();
+                        startPostponedEnterTransition();
+                        return true;
+                    }
+                    return false;
+                }
+            });
+        }
     }
 
     private void refresh() {
@@ -248,7 +257,7 @@ public class ArticleListActivity extends AppCompatActivity implements
         }
     }
 
-    private class ViewHolder extends RecyclerView.ViewHolder  implements View.OnClickListener {
+    private class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
 
         private Cursor mCursor;
         private int mArticlePosition;
@@ -282,25 +291,34 @@ public class ArticleListActivity extends AppCompatActivity implements
                     .load(mCursor.getString(ArticleLoader.Query.PHOTO_URL))
                     .into(thumbnailView);
 
-            thumbnailView.setTransitionName(titleView.getText().toString());
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+                thumbnailView.setTransitionName(ITEM_NAME_TRANSITION + position);
+            }
+
             thumbnailView.setTag(titleView.getText().toString());
             mArticlePosition = position;
         }
 
-        private long getItemId(int position) {
+        public long getItemId(int position) {
             mCursor.moveToPosition(position);
             return mCursor.getLong(ArticleLoader.Query._ID);
         }
 
         @Override
         public void onClick(View v) {
-            Intent intent = new Intent(Intent.ACTION_VIEW,
-                    ItemsContract.Items.buildItemUri(getItemId(mArticlePosition)));
+
+            Intent intent = new Intent(Intent.ACTION_VIEW, ItemsContract.Items.buildItemUri(getItemId(mArticlePosition)));
+            intent.putExtra(EXTRA_STARTING_ARTICLE_POSITION, mArticlePosition);
 
             if (!mIsDetailsActivityStarted) {
                 mIsDetailsActivityStarted = true;
-                startActivity(intent, ActivityOptions.makeSceneTransitionAnimation(ArticleListActivity.this,
-                        thumbnailView, thumbnailView.getTransitionName()).toBundle());
+
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+                    startActivity(intent, ActivityOptions.makeSceneTransitionAnimation(ArticleListActivity.this,
+                            thumbnailView, thumbnailView.getTransitionName()).toBundle());
+                } else {
+                    startActivity(intent);
+                }
             }
         }
     }
