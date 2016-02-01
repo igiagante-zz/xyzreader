@@ -103,6 +103,7 @@
         android:layout_gravity="bottom|end"
         android:layout_margin="16dp"
         android:src="@drawable/ic_share"
-        android:elevation="@dimen/fab_elevation"/>
+        android:elevation="@dimen/fab_elevation"
+        app:layout_behavior="com.example.xyzreader.ui.ScrollAwareFABBehavior"/>
 
 </com.example.xyzreader.ui.DrawInsetsFrameLayout>
